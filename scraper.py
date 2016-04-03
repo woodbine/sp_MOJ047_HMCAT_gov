@@ -104,6 +104,9 @@ for link in links:
         title = link.contents[0]
         csvYr = title.split(' ')[-1]
         csvMth = title.split(' ')[-2][:3]
+        if '-' in csvMth:
+            csvMth = csvYr[:3]
+            csvYr = '2015'
         csvMth = convert_mth_strings(csvMth.upper())
         data.append([csvYr, csvMth, url])
 
