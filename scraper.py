@@ -84,7 +84,7 @@ def convert_mth_strings ( mth_string ):
 #### VARIABLES 1.0
 
 entity_id = "E1721_HCC_gov"
-url = "http://www3.hants.gov.uk/opendata/datasets/supplierpayments.htm"
+url = "https://www.hants.gov.uk/aboutthecouncil/informationandstats/opendata/opendatasearch/supplierpayments"
 errors = 0
 data = []
 
@@ -101,7 +101,7 @@ links = soup.findAll('a', href=True)
 for link in links:
     url = link['href']
     if '.csv' in url:
-        title = link.contents[0]
+        title = link.contents[0].replace('(CSV)', '').strip().replace(' 5', '')
         csvYr = title.split(' ')[-1]
         csvMth = title.split(' ')[-2][:3]
         if '-' in csvMth:
