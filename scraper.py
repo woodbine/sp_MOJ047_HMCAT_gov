@@ -9,7 +9,8 @@ import urllib2
 from datetime import datetime
 from bs4 import BeautifulSoup
 
-#### FUNCTIONS 1.0
+#### FUNCTIONS 1.2
+import requests   # import requests for validating urls
 
 def validateFilename(filename):
     filenameregex = '^[a-zA-Z0-9]+_[a-zA-Z0-9]+_[a-zA-Z0-9]+_[0-9][0-9][0-9][0-9]_[0-9QY][0-9]$'
@@ -37,24 +38,25 @@ def validateFilename(filename):
 
 def validateURL(url):
     try:
-        r = urllib2.urlopen(url)
+        r = requests.get(url)
         count = 1
-        while r.getcode() == 500 and count < 4:
+        while r.status_code == 500 and count < 4:
             print ("Attempt {0} - Status code: {1}. Retrying.".format(count, r.status_code))
             count += 1
-            r = urllib2.urlopen(url)
+            r = requests.get(url)
         sourceFilename = r.headers.get('Content-Disposition')
 
         if sourceFilename:
             ext = os.path.splitext(sourceFilename)[1].replace('"', '').replace(';', '').replace(' ', '')
         else:
             ext = os.path.splitext(url)[1]
-        validURL = r.getcode() == 200
-        validFiletype = ext.lower() in ['.csv', '.xls', '.xlsx']
+        validURL = r.status_code == 200
+        validFiletype = ext.lower() in ['.csv', '.xls', '.xlsx', '.pdf']
         return validURL, validFiletype
     except:
         print ("Error validating URL.")
         return False, False
+
 
 
 def validate(filename, file_url):
@@ -83,8 +85,8 @@ def convert_mth_strings ( mth_string ):
 
 #### VARIABLES 1.0
 
-entity_id = "E1721_HCC_gov"
-url = "https://www.hants.gov.uk/aboutthecouncil/informationandstats/opendata/opendatasearch/supplierpayments"
+entity_id = "MOJ047_HMCAT_gov"
+url = "https://www.gov.uk/government/publications/hmcts-spend-data-over-25000-2016"
 errors = 0
 data = []
 
@@ -96,19 +98,15 @@ soup = BeautifulSoup(html, 'lxml')
 
 #### SCRAPE DATA
 
-links = soup.findAll('a', href=True)
-
+links = soup.find_all('div', 'attachment-details')
 for link in links:
-    url = link['href']
-    if '.csv' in url:
-        title = link.contents[0].replace('(CSV)', '').strip().replace(' 5', '')
-        csvYr = title.split(' ')[-1]
-        csvMth = title.split(' ')[-2][:3]
-        if '-' in csvMth:
-            csvMth = csvYr[:3]
-            csvYr = '2015'
-        csvMth = convert_mth_strings(csvMth.upper())
-        data.append([csvYr, csvMth, url])
+    url = 'https://www.gov.uk'+link.find('span', 'download').find('a')['href']
+    title = link.find('h2', 'title').text.strip().split()
+    csvYr = title[1][:4]
+    csvMth = title[0][:3]
+    csvMth = convert_mth_strings(csvMth.upper())
+    data.append([csvYr, csvMth, url])
+
 
 #### STORE DATA 1.0
 
